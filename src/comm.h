@@ -61,7 +61,7 @@
          
 */
 
-#ifdef MPI
+#ifdef GSMPI
 #include <mpi.h>
 typedef MPI_Comm comm_ext;
 typedef MPI_Request comm_req;
@@ -135,7 +135,7 @@ GS_FOR_EACH_DOMAIN(DEFINE_REDUCE)
 
 static void comm_init(struct comm *c, comm_ext ce)
 {
-#ifdef MPI
+#ifdef GSMPI
   int i;
   MPI_Comm_dup(ce, &c->c);
   MPI_Comm_rank(c->c,&i), comm_gbl_id=c->id=i;
@@ -148,7 +148,7 @@ static void comm_init(struct comm *c, comm_ext ce)
 static void comm_init_check_(struct comm *c, MPI_Fint ce, uint np,
                              const char *file, unsigned line)
 {
-#ifdef MPI
+#ifdef GSMPI
   comm_init(c,MPI_Comm_f2c(ce));
   if(c->np != np)
     fail(1,file,line,"comm_init_check: passed P=%u, "
@@ -168,7 +168,7 @@ static void comm_dup_(struct comm *d, const struct comm *s,
                       const char *file, unsigned line)
 {
   d->id = s->id, d->np = s->np;
-#ifdef MPI
+#ifdef GSMPI
   MPI_Comm_dup(s->c,&d->c);
 #else
   if(s->np!=1) fail(1,file,line,"%s not compiled with -DMPI\n",file);
@@ -178,14 +178,14 @@ static void comm_dup_(struct comm *d, const struct comm *s,
 
 static void comm_free(struct comm *c)
 {
-#ifdef MPI
+#ifdef GSMPI
   MPI_Comm_free(&c->c);
 #endif
 }
 
 static double comm_time(void)
 {
-#ifdef MPI
+#ifdef GSMPI
   return MPI_Wtime();
 #else
   return 0;
@@ -194,7 +194,7 @@ static double comm_time(void)
 
 static void comm_barrier(const struct comm *c)
 {
-#ifdef MPI
+#ifdef GSMPI
   MPI_Barrier(c->c);
 #endif
 }
@@ -202,7 +202,7 @@ static void comm_barrier(const struct comm *c)
 static void comm_recv(const struct comm *c, void *p, size_t n,
                       uint src, int tag)
 {
-#ifdef MPI
+#ifdef GSMPI
 # ifndef MPI_STATUS_IGNORE
   MPI_Status stat;
   MPI_Recv(p,n,MPI_UNSIGNED_CHAR,src,tag,c->c,&stat);
@@ -215,7 +215,7 @@ static void comm_recv(const struct comm *c, void *p, size_t n,
 static void comm_send(const struct comm *c, void *p, size_t n,
                       uint dst, int tag)
 {
-#ifdef MPI
+#ifdef GSMPI
   MPI_Send(p,n,MPI_UNSIGNED_CHAR,dst,tag,c->c);
 #endif
 }
@@ -223,7 +223,7 @@ static void comm_send(const struct comm *c, void *p, size_t n,
 static void comm_irecv(comm_req *req, const struct comm *c,
                        void *p, size_t n, uint src, int tag)
 {
-#ifdef MPI
+#ifdef GSMPI
   MPI_Irecv(p,n,MPI_UNSIGNED_CHAR,src,tag,c->c,req);
 #endif
 }
@@ -231,14 +231,14 @@ static void comm_irecv(comm_req *req, const struct comm *c,
 static void comm_isend(comm_req *req, const struct comm *c,
                        void *p, size_t n, uint dst, int tag)
 {
-#ifdef MPI
+#ifdef GSMPI
   MPI_Isend(p,n,MPI_UNSIGNED_CHAR,dst,tag,c->c,req);
 #endif
 }
 
 static void comm_wait(comm_req *req, int n)
 {
-#ifdef MPI
+#ifdef GSMPI
 # ifndef MPI_STATUSES_IGNORE
   MPI_Status status[8];
   while(n>=8) MPI_Waitall(8,req,status), req+=8, n-=8;
@@ -251,7 +251,7 @@ static void comm_wait(comm_req *req, int n)
 
 static void comm_bcast(const struct comm *c, void *p, size_t n, uint root)
 {
-#ifdef MPI
+#ifdef GSMPI
   MPI_Bcast(p,n,MPI_UNSIGNED_CHAR,root,c->c);
 #endif
 }

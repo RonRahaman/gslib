@@ -95,7 +95,7 @@ int main(int narg, char* arg[])
 {
   comm_ext world; int np;
   struct comm comm;
-#ifdef MPI
+#ifdef GSMPI
   MPI_Init(&narg,&arg);
   world = MPI_COMM_WORLD;
   MPI_Comm_size(world,&np);
@@ -107,7 +107,7 @@ int main(int narg, char* arg[])
   test(&comm);
   comm_free(&comm);
   
-#ifdef MPI
+#ifdef GSMPI
   MPI_Finalize();
 #endif
 

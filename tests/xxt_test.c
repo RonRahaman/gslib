@@ -97,7 +97,7 @@ int main(int narg, char* arg[])
   struct crs_data *crs;
   comm_ext world; int id,np;
   struct comm comm;
-#ifdef MPI
+#ifdef GSMPI
   MPI_Init(&narg,&arg);
   world = MPI_COMM_WORLD;
   MPI_Comm_size(world,&np);
@@ -128,7 +128,7 @@ int main(int narg, char* arg[])
   crs_xxt_free(crs);
   comm_free(&comm);
 
-#ifdef MPI
+#ifdef GSMPI
   MPI_Finalize();
 #endif
   return 0;

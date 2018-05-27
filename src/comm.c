@@ -108,7 +108,7 @@ void comm_allreduce(const struct comm *com, gs_dom dom, gs_op op,
                           void *v, uint vn, void *buf)
 {
   if(vn==0) return;
-#ifdef MPI
+#ifdef GSMPI
   {
     MPI_Datatype mpitype;
     MPI_Op mpiop;
@@ -134,7 +134,7 @@ void comm_allreduce(const struct comm *com, gs_dom dom, gs_op op,
     return;
   }
 #endif
-#ifdef MPI
+#ifdef GSMPI
 comm_allreduce_byhand:
   allreduce_imp(com,dom,op, v,vn, buf);
 #endif
@@ -144,7 +144,7 @@ void comm_iallreduce(comm_req *req, const struct comm *com, gs_dom dom, gs_op op
                           void *v, uint vn, void *buf)
 {
   if(vn==0) return;
-#ifdef MPI
+#ifdef GSMPI
   {
     MPI_Datatype mpitype;
     MPI_Op mpiop;
@@ -169,7 +169,7 @@ void comm_iallreduce(comm_req *req, const struct comm *com, gs_dom dom, gs_op op
     return;
   }
 #endif
-#ifdef MPI
+#ifdef GSMPI
 comm_allreduce_byhand:
   allreduce_imp(com,dom,op, v,vn, buf);
 #endif

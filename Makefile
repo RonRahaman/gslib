@@ -21,7 +21,7 @@ INSTALL_ROOT = $(LIBDIR)
 endif
 
 ifneq (0,$(MPI))
-  G+=-DMPI
+  G+=-DGSMPI
 endif
 
 ifneq (0,$(MPIIO))

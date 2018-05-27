@@ -27,7 +27,7 @@ int main(int narg, char *arg[])
   struct crystal crystal;
   struct array A, A0=null_array; r_work *row, *row_0;
   uint i;
-#ifdef MPI
+#ifdef GSMPI
   MPI_Init(&narg,&arg);
   world = MPI_COMM_WORLD;
   MPI_Comm_size(world,&np);
@@ -85,7 +85,7 @@ int main(int narg, char *arg[])
   
   comm_free(&comm);
   
-#ifdef MPI
+#ifdef GSMPI
   MPI_Finalize();
 #endif
 

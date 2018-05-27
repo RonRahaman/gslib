@@ -301,7 +301,7 @@ int main(int narg, char *arg[])
   comm_ext world;
   struct comm comm;
   
-#ifdef MPI
+#ifdef GSMPI
   MPI_Init(&narg,&arg);
   world = MPI_COMM_WORLD;
 #else
@@ -320,7 +320,7 @@ int main(int narg, char *arg[])
   
   comm_free(&comm);
 
-#ifdef MPI
+#ifdef GSMPI
   MPI_Finalize();
 #endif
 

@@ -16,7 +16,7 @@ int main(int narg, char *arg[])
   struct comm comm;
   struct crystal cr;
   uint i,sum, *data, *end;
-#ifdef MPI
+#ifdef GSMPI
   MPI_Init(&narg,&arg);
   world = MPI_COMM_WORLD;
   MPI_Comm_size(world,&np);
@@ -80,7 +80,7 @@ int main(int narg, char *arg[])
   diagnostic("",__FILE__,__LINE__,
     "test successful %u/%u",(unsigned)comm.id,(unsigned)comm.np);
   
-#ifdef MPI
+#ifdef GSMPI
   MPI_Finalize();
 #endif
 

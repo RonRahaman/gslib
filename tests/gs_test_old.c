@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#ifdef MPI
+#ifdef GSMPI
 #  include <mpi.h>
 #else
    typedef void MPI_Comm;
@@ -60,7 +60,7 @@ int main(int narg, char* arg[])
   sint i,handle,maxv=3;
   real *u;
   slong *glindex;
-#ifndef MPI
+#ifndef GSMPI
   int comm;
 #else
   MPI_Init(&narg,&arg);
@@ -140,7 +140,7 @@ int main(int narg, char* arg[])
   
   fgs_free(&handle);
   printf("test on node %d/%d succeeded\n", (int)id+1, (int)np);
-#ifdef MPI  
+#ifdef GSMPI  
   MPI_Comm_free(&comm);
   MPI_Finalize();
 #endif
