@@ -468,7 +468,7 @@ void sortv(T *out, const T *A, uint n, unsigned stride, buffer *restrict buf)
     uint (*restrict count)[DIGIT_VALUES];
     const size_t count_off=align_as(uint,n*sizeof(T));
     buffer_reserve(buf,count_off+sizeof(uint[DIGITS][DIGIT_VALUES]));
-    work = buf->ptr;
+    work = (T *) buf->ptr;
     count = (uint(*)[DIGIT_VALUES])((char*)buf->ptr+count_off);
     radix_sortv(out, A,n,stride, work,count);
   }
@@ -482,7 +482,7 @@ uint *sortp(buffer *restrict buf, int start_perm,
   size_t work_off=align_as(sort_data,n*sizeof(uint));
   if(n<DIGIT_VALUES) {
     buffer_reserve(buf,work_off+2*n*sizeof(sort_data));
-    perm = buf->ptr;
+    perm = (uint *) buf->ptr;
     work = (sort_data*)((char*)buf->ptr+work_off);
     if(n<2) {
       if(n==1) *perm=0;
@@ -493,14 +493,14 @@ uint *sortp(buffer *restrict buf, int start_perm,
   } else if(STATIC_DIGIT_BUCKETS){
     static uint count[DIGITS][DIGIT_VALUES];
     buffer_reserve(buf,work_off+2*n*sizeof(sort_data));
-    perm = buf->ptr;
+    perm = (uint *) buf->ptr;
     work = (sort_data*)((char*)buf->ptr+work_off);
     radix_sortp(perm,start_perm, A,n,stride, work,count);
   } else {
     uint (*restrict count)[DIGIT_VALUES];
     const size_t count_off=align_as(uint,work_off+2*n*sizeof(sort_data));
     buffer_reserve(buf,count_off+sizeof(uint[DIGITS][DIGIT_VALUES]));
-    perm = buf->ptr;
+    perm = (uint *) buf->ptr;
     work = (sort_data*)((char*)buf->ptr+work_off);
     count = (uint(*)[DIGIT_VALUES])((char*)buf->ptr+count_off);
     radix_sortp(perm,start_perm, A,n,stride, work,count);
