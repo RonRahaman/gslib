@@ -25,25 +25,25 @@ static void pack_int(
 #define COPY_ROW() memcpy(out,row,p_off), \
                    memcpy((char*)out + p_off,row+after,after_len)
 
-#define PACK_BODY() do {                                                  \
-  uint dummy, *len_ptr=&dummy;                                            \
-  uint i, p,lp = -(uint)1, len=0;                                         \
-  uint *restrict out = buffer_reserve(data, n*(row_size+3)*sizeof(uint)); \
-  for(i=0;i<n;++i) {                                                      \
-    const char *row = input + size*perm[i];                               \
-    GET_P();                                                              \
-    if(p!=lp) {                                                           \
-      lp = p;                                                             \
-      *len_ptr = len;       /* previous message length */                 \
-      *out++ = p;           /* target */                                  \
-      *out++ = id;          /* source */                                  \
-      len_ptr=out++; len=0; /* length (t.b.d.) */                         \
-    }                                                                     \
-    COPY_ROW();                                                           \
-    out += row_size, len += row_size;                                     \
-  }                                                                       \
-  *len_ptr = len; /* last message length */                               \
-  data->n = out - (uint*)data->ptr;                                       \
+#define PACK_BODY() do {                                                           \
+  uint dummy, *len_ptr=&dummy;                                                     \
+  uint i, p,lp = -(uint)1, len=0;                                                  \
+  uint *restrict out = (uint *) buffer_reserve(data, n*(row_size+3)*sizeof(uint)); \
+  for(i=0;i<n;++i) {                                                               \
+    const char *row = input + size*perm[i];                                        \
+    GET_P();                                                                       \
+    if(p!=lp) {                                                                    \
+      lp = p;                                                                      \
+      *len_ptr = len;       /* previous message length */                          \
+      *out++ = p;           /* target */                                           \
+      *out++ = id;          /* source */                                           \
+      len_ptr=out++; len=0; /* length (t.b.d.) */                                  \
+    }                                                                              \
+    COPY_ROW();                                                                    \
+    out += row_size, len += row_size;                                              \
+  }                                                                                \
+  *len_ptr = len; /* last message length */                                        \
+  data->n = out - (uint*)data->ptr;                                                \
 } while(0)
   PACK_BODY();
 #undef COPY_ROW
@@ -69,7 +69,7 @@ static void pack_more(
   const char *const restrict input, const unsigned size,
   const uint *restrict perm)
 {
-  uint *restrict buf = data->ptr, *buf_end = buf+data->n;
+  uint *restrict buf = (uint *) data->ptr, *buf_end = (uint *) buf+data->n;
   while(buf!=buf_end) {
     uint *msg_end = buf+3+buf[2]; buf+=3;
     while(buf!=msg_end)
@@ -81,7 +81,7 @@ static void unpack_more(
   char *restrict out, const unsigned size,
   const buffer *const data, const unsigned off, const unsigned row_size)
 {
-  const uint *restrict buf = data->ptr, *buf_end = buf+data->n;
+  const uint *restrict buf = (uint *) data->ptr, *buf_end = (uint *) buf+data->n;
   while(buf!=buf_end) {
     const uint *msg_end = buf+3+buf[2]; buf+=3;
     while(buf!=msg_end)
@@ -94,7 +94,7 @@ static void unpack_int(
   const buffer *const data, const unsigned row_size, int set_src)
 {
   const unsigned after = p_off + sizeof(uint), after_len = size-after;
-  const uint *restrict buf = data->ptr, *buf_end = buf+data->n;
+  const uint *restrict buf = (uint *) data->ptr, *buf_end = (uint *) buf+data->n;
   const unsigned pi = set_src ? 1:0;
   while(buf!=buf_end) {
     const uint p=buf[pi], *msg_end = buf+3+buf[2]; buf+=3;
@@ -109,7 +109,7 @@ static void unpack_int(
 
 static uint num_rows(const buffer *const data, const unsigned row_size)
 {
-  const uint *buf = data->ptr, *buf_end = buf + data->n;
+  const uint *buf = (uint *) data->ptr, *buf_end = (uint *) buf + data->n;
   uint n=0;
   while(buf!=buf_end) { uint len=buf[2]; n+=len, buf+=len+3; }
   return n/row_size;
@@ -117,7 +117,7 @@ static uint num_rows(const buffer *const data, const unsigned row_size)
 
 static uint cap_rows(buffer *const data, const unsigned row_size,const uint max)
 {
-  uint *buf = data->ptr, *buf_end = buf + data->n;
+  uint *buf = (uint *) data->ptr, *buf_end = (uint *) buf + data->n;
   const uint maxn = max*row_size;
   uint n=0;
   while(buf!=buf_end) {
@@ -150,12 +150,15 @@ uint sarray_transfer_many(
   
   perm = sortp(&cr->work,0, proc,A[0]->n,proc_stride);
 
-  if(!ext) pack_int(&cr->data, row_size, cr->comm.id, A[0]->ptr,A[0]->n,size[0],
-                    p_off, perm);
-  else     pack_ext(&cr->data, row_size, cr->comm.id, A[0]->ptr,A[0]->n,size[0],
-                    proc,proc_stride, perm);
-  for(off=off1,i=1;i<An;++i) if(size[i])
-    pack_more(&cr->data,off,row_size, A[i]->ptr,size[i], perm),off+=size[i];
+  if(!ext)
+    pack_int(&cr->data, row_size, cr->comm.id, (const char *) A[0]->ptr, A[0]->n, size[0], p_off, perm);
+  else
+    pack_ext(&cr->data, row_size, cr->comm.id, (const char *) A[0]->ptr, A[0]->n, size[0], proc, proc_stride, perm);
+  for(off = off1, i = 1; i < An; ++i)
+    if(size[i]) {
+      pack_more(&cr->data, off, row_size, (const char *) A[i]->ptr, size[i], perm);
+      off += size[i];
+    }
     
   crystal_router(cr);
   
@@ -171,10 +174,15 @@ uint sarray_transfer_many(
     for(i=0;i<An;++i) A[i]->n=an;
   }
   
-  if(!ext) unpack_int (A[0]->ptr,size[0],p_off, &cr->data,  row_size, set_src);
-  else     unpack_more(A[0]->ptr,size[0],       &cr->data,0,row_size);
-  for(off=off1,i=1;i<An;++i) if(size[i])
-    unpack_more(A[i]->ptr,size[i], &cr->data,off,row_size),off+=size[i];
+  if(!ext)
+    unpack_int((char *) A[0]->ptr, size[0], p_off, &cr->data, row_size, set_src);
+  else
+    unpack_more((char *) A[0]->ptr, size[0], &cr->data, 0, row_size);
+  for(off=off1,i=1;i<An;++i)
+    if(size[i]) {
+      unpack_more((char *) A[i]->ptr, size[i], &cr->data, off, row_size);
+      off += size[i];
+    }
     
   return n;
 }
