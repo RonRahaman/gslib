@@ -13,7 +13,8 @@
 
 void sarray_permute_(size_t size, void *A, size_t n, uint *perm, void *work)
 {
-  char *const ar = A, *const item = work;
+  char *const ar = (char *const) A;
+  char *const item = (char *const) work;
   sint *const fperm = (sint*)perm;
   uint i;
   for(i=0;i<n;++i) {
@@ -40,6 +41,5 @@ void sarray_permute_buf_(size_t align, size_t size, void *A, size_t n,
                          buffer *buf)
 {
   buffer_reserve(buf,align_as_(align,n*sizeof(uint)+size));
-  sarray_permute_(size,A,n, buf->ptr,
-                 (char*)buf->ptr + align_as_(align,n*sizeof(uint)));
+  sarray_permute_(size, A, n, (uint *) buf->ptr, (char*) buf->ptr + align_as_(align,n*sizeof(uint)));
 }
