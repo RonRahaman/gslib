@@ -75,9 +75,9 @@ static void uintcpy(uint *dst, const uint *src, uint n)
 static uint crystal_move(struct crystal *p, uint cutoff, int send_hi)
 {
   uint len, *src, *end;
-  uint *keep = p->data.ptr, *send;
+  uint *keep = (uint *) p->data.ptr, *send;
   uint n = p->data.n;
-  send = buffer_reserve(&p->work,n*sizeof(uint));
+  send = (uint *) buffer_reserve(&p->work,n*sizeof(uint));
   if(send_hi) { /* send hi, keep lo */
     for(src=keep,end=keep+n; src<end; src+=len) {
       len = 3 + src[2];
