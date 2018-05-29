@@ -164,7 +164,7 @@ void sparse_cholesky_factor(uint n, const uint *Arp, const uint *Aj,
   const uint n_uints_as_dbls = (n*sizeof(uint)+sizeof(double)-1)/sizeof(double);
   buffer_reserve(buf,(n_uints_as_dbls+n)*sizeof(double));
   factor_symbolic(n,Arp,Aj,out,buf);
-  factor_numeric(n,Arp,Aj,A,out,buf->ptr,n_uints_as_dbls+(double*)buf->ptr);
+  factor_numeric(n, Arp, Aj, A, out, (uint *) buf->ptr, n_uints_as_dbls+(double*)buf->ptr);
 }
 
 void sparse_cholesky_free(struct sparse_cholesky *fac)
