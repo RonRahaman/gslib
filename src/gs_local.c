@@ -186,7 +186,7 @@ GS_FOR_EACH_DOMAIN(DEFINE_PROCS)
 ------------------------------------------------------------------------------*/
 void gs_gather_array(void *out, const void *in, uint n, gs_dom dom, gs_op op)
 {
-#define WITH_OP(T,OP) gather_array_##T##_##OP(out,in,n)
+#define WITH_OP(T,OP) gather_array_##T##_##OP((T*) out, (const T*) in, n)
 #define WITH_DOMAIN(T) SWITCH_OP(T,op)
   SWITCH_DOMAIN(dom);
 #undef  WITH_DOMAIN
@@ -195,7 +195,7 @@ void gs_gather_array(void *out, const void *in, uint n, gs_dom dom, gs_op op)
 
 void gs_init_array(void *out, uint n, gs_dom dom, gs_op op)
 {
-#define WITH_DOMAIN(T) init_array_##T(out,n,op)
+#define WITH_DOMAIN(T) init_array_##T((T*) out, n, op)
   SWITCH_DOMAIN(dom);
 #undef  WITH_DOMAIN
 }
@@ -206,7 +206,7 @@ void gs_init_array(void *out, uint n, gs_dom dom, gs_op op)
 void gs_gather(void *out, const void *in, const unsigned vn,
                const uint *map, gs_dom dom, gs_op op)
 {
-#define WITH_OP(T,OP) gather_##T##_##OP(out,in,1,map)
+#define WITH_OP(T,OP) gather_##T##_##OP((T*) out, (const T*) in, 1, map)
 #define WITH_DOMAIN(T) SWITCH_OP(T,op)
   SWITCH_DOMAIN(dom);
 #undef  WITH_DOMAIN
@@ -216,7 +216,7 @@ void gs_gather(void *out, const void *in, const unsigned vn,
 void gs_scatter(void *out, const void *in, const unsigned vn,
                 const uint *map, gs_dom dom)
 {
-#define WITH_DOMAIN(T) scatter_##T(out,1,in,1,map)
+#define WITH_DOMAIN(T) scatter_##T((T*) out, 1, (const T*) in, 1, map)
   SWITCH_DOMAIN(dom);
 #undef  WITH_DOMAIN
 }
@@ -224,7 +224,7 @@ void gs_scatter(void *out, const void *in, const unsigned vn,
 void gs_init(void *out, const unsigned vn, const uint *map,
              gs_dom dom, gs_op op)
 {
-#define WITH_DOMAIN(T) init_##T(out,map,op)
+#define WITH_DOMAIN(T) init_##T((T*) out, map, op)
   SWITCH_DOMAIN(dom);
 #undef  WITH_DOMAIN
 }
@@ -235,7 +235,7 @@ void gs_init(void *out, const unsigned vn, const uint *map,
 void gs_gather_vec(void *out, const void *in, const unsigned vn,
                    const uint *map, gs_dom dom, gs_op op)
 {
-#define WITH_OP(T,OP) gather_vec_##T##_##OP(out,in,vn,map)
+#define WITH_OP(T,OP) gather_vec_##T##_##OP((T*) out, (const T*) in, vn, map)
 #define WITH_DOMAIN(T) SWITCH_OP(T,op)
   SWITCH_DOMAIN(dom);
 #undef  WITH_DOMAIN
@@ -245,7 +245,7 @@ void gs_gather_vec(void *out, const void *in, const unsigned vn,
 void gs_init_vec(void *out, const unsigned vn, const uint *map,
                  gs_dom dom, gs_op op)
 {
-#define WITH_DOMAIN(T) init_vec_##T(out,vn,map,op)
+#define WITH_DOMAIN(T) init_vec_##T((T*) out, vn, map, op)
   SWITCH_DOMAIN(dom);
 #undef  WITH_DOMAIN
 }
@@ -258,8 +258,9 @@ void gs_gather_many(void *out, const void *in, const unsigned vn,
 {
   uint k;
   typedef void *ptr_to_void; typedef const void *ptr_to_const_void;
-  const ptr_to_void *p = out; const ptr_to_const_void *q = in;
-#define WITH_OP(T,OP) for(k=0;k<vn;++k) gather_##T##_##OP(p[k],q[k],1,map)
+  const ptr_to_void *p = (const ptr_to_void *) out;
+  const ptr_to_const_void *q = (const ptr_to_const_void *) in;
+#define WITH_OP(T,OP) for(k=0;k<vn;++k) gather_##T##_##OP((T*) p[k], (const T*) q[k], 1, map)
 #define WITH_DOMAIN(T) SWITCH_OP(T,op)
   SWITCH_DOMAIN(dom);
 #undef  WITH_DOMAIN
@@ -270,9 +271,11 @@ void gs_scatter_many(void *out, const void *in, const unsigned vn,
                      const uint *map, gs_dom dom)
 {
   uint k;
-  typedef void *ptr_to_void; typedef const void *ptr_to_const_void;
-  const ptr_to_void *p = out; const ptr_to_const_void *q = in;
-#define WITH_DOMAIN(T) for(k=0;k<vn;++k) scatter_##T(p[k],1,q[k],1,map)
+  typedef void *ptr_to_void;
+  typedef const void *ptr_to_const_void;
+  const ptr_to_void *p = (const ptr_to_void *) out;
+  const ptr_to_const_void *q = (const ptr_to_const_void *) in;
+#define WITH_DOMAIN(T) for(k=0;k<vn;++k) scatter_##T((T*) p[k], 1, (const T*) q[k], 1, map)
   SWITCH_DOMAIN(dom);
 #undef  WITH_DOMAIN
 }
@@ -281,8 +284,9 @@ void gs_init_many(void *out, const unsigned vn, const uint *map,
                   gs_dom dom, gs_op op)
 {
   uint k;
-  typedef void *ptr_to_void; const ptr_to_void *p = out;
-#define WITH_DOMAIN(T) for(k=0;k<vn;++k) init_##T(p[k],map,op)
+  typedef void *ptr_to_void;
+  const ptr_to_void *p = (const ptr_to_void *) out;
+#define WITH_DOMAIN(T) for(k=0;k<vn;++k) init_##T((T*) p[k],map,op)
   SWITCH_DOMAIN(dom);
 #undef  WITH_DOMAIN
 }
@@ -295,11 +299,13 @@ void gs_init_many(void *out, const unsigned vn, const uint *map,
 void gs_gather_vec_to_many(void *out, const void *in, const unsigned vn,
                            const uint *map, gs_dom dom, gs_op op)
 {
-  unsigned i; const unsigned unit_size = gs_dom_size[dom];
+  unsigned i;
+  const unsigned unit_size = gs_dom_size[dom];
   typedef void *ptr_to_void;
-  const ptr_to_void *p = out; const char *q = in;
+  const ptr_to_void *p = (const ptr_to_void *) out;
+  const char *q = (const char *) in;
 #define WITH_OP(T,OP) \
-  for(i=vn;i;--i) gather_##T##_##OP(*p++,(const T*)q,vn,map), q+=unit_size
+  for(i=vn;i;--i) gather_##T##_##OP((T*) *p++, (const T*) q, vn, map), q+=unit_size
 #define WITH_DOMAIN(T) SWITCH_OP(T,op)
   SWITCH_DOMAIN(dom);
 #undef  WITH_DOMAIN
@@ -309,11 +315,13 @@ void gs_gather_vec_to_many(void *out, const void *in, const unsigned vn,
 void gs_scatter_many_to_vec(void *out, const void *in, const unsigned vn,
                             const uint *map, gs_dom dom)
 {
-  unsigned i; const unsigned unit_size = gs_dom_size[dom];
+  unsigned i;
+  const unsigned unit_size = gs_dom_size[dom];
   typedef const void *ptr_to_const_void;
-  char *p = out; const ptr_to_const_void *q = in;
+  char *p = (char *) out;
+  const ptr_to_const_void *q = (const ptr_to_const_void *) in;
 #define WITH_DOMAIN(T) \
-  for(i=vn;i;--i) scatter_##T((T*)p,vn,*q++,1,map), p+=unit_size
+  for(i=vn;i;--i) scatter_##T((T*)p, vn, (const T*) *q++, 1, map), p+=unit_size
   SWITCH_DOMAIN(dom);
 #undef  WITH_DOMAIN
 }
@@ -321,11 +329,13 @@ void gs_scatter_many_to_vec(void *out, const void *in, const unsigned vn,
 void gs_scatter_vec_to_many(void *out, const void *in, const unsigned vn,
                             const uint *map, gs_dom dom)
 {
-  unsigned i; const unsigned unit_size = gs_dom_size[dom];
+  unsigned i;
+  const unsigned unit_size = gs_dom_size[dom];
   typedef void *ptr_to_void;
-  const ptr_to_void *p = out; const char *q = in;
+  const ptr_to_void *p = (const ptr_to_void *) out;
+  const char *q = (const char *) in;
 #define WITH_DOMAIN(T) \
-  for(i=vn;i;--i) scatter_##T(*p++,1,(const T*)q,vn,map), q+=unit_size
+  for(i=vn;i;--i) scatter_##T((T*) *p++, 1, (const T*) q, vn, map), q+=unit_size
   SWITCH_DOMAIN(dom);
 #undef  WITH_DOMAIN
 }
